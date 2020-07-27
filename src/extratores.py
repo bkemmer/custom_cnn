@@ -1,6 +1,7 @@
 from skimage.feature import local_binary_pattern
-import matplotlib,pyplot as plt
-# import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def aplica_lbp(path, numPoints=24, radius=8, method='uniform'):
     img = plt.imread(path)
@@ -12,5 +13,3 @@ def aplica_lbp(path, numPoints=24, radius=8, method='uniform'):
 
     return lbp, hist
 
-
-    

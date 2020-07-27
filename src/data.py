@@ -25,13 +25,13 @@ def getDF(path):
     return df
 
 def preprocessing(path_image, path_to_save, dim=(100, 100)):
-    print(path_image + " START")
+    # print(path_image + " START")
     original_image = open_img(path_image, color=0)
     grayscale_image = original_image.copy()
     cropped_image, (column, row, width, height) = detectaFaces(grayscale_image)
     resized = cv2.resize(cropped_image, dim, interpolation = cv2.INTER_AREA)
     save_img(path_img=path_to_save, img=resized)
-    print(path_image + " FINISH")
+    # print(path_image + " FINISH")
     return (column, row, width, height)
 
 def image_path(person, id_, data_path):
@@ -86,6 +86,12 @@ def executaPreprocessamento(df_train, df_test):
 
     df_test['VJ_pair_id_1'] = df_test.apply(lambda x: preprocessing(path_image=x['path_pair_id_1'], path_to_save=x['path_pair_id_1_cropped']), axis=1)
     df_test['VJ_pair_id_2'] = df_test.apply(lambda x: preprocessing(path_image=x['path_pair_id_2'], path_to_save=x['path_pair_id_2_cropped']), axis=1)
+    
+    return df_train, df_test
+
+def geraVariavelBinaria(df_train, df_test):
+    df_train['target'] = df_train.apply(lambda x: 0 if x['pair_name_2'] is None else 1, axis=1)
+    df_test['target'] = df_test.apply(lambda x: 0 if x['pair_name_2'] is None else 1, axis=1)
     return df_train, df_test
 
 def main():
@@ -102,11 +108,15 @@ def main():
     df_train, df_test = completaPaths(df_train, df_test, data_path=lfw2)
     df_train, df_test = createDirs(df_train, df_test)
     df_train, df_test = executaPreprocessamento(df_train, df_test)
+
+    df_train, df_test = geraVariavelBinaria(df_train, df_test)
     
-    output_path = Path('Data', 'processados')
+    output_path = Path('Data', 'Processados')
     output_path.mkdir(parents=True, exist_ok=True)
     df_train.to_pickle(Path(output_path, 'df_train.pickle'))
     df_test.to_pickle(Path(output_path, 'df_test.pickle'))
+
+
 
 if __name__ == '__main__':
     main()
