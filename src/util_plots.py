@@ -1,4 +1,4 @@
-import matplotlib,pyplot as plt
+import matplotlib.pyplot as plt
 import cv2
 
 def plot_rectangle(detected_faces, image, title='Image', cmap_type='gray', kwargs={'lw': 20.}):

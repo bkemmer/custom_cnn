@@ -1,18 +1,27 @@
 import numpy as np
 from pathlib import Path
+from sklearn import svm
 
-def readNpy(fname):
-    with open(fname + '.npy', 'rb') as f:
+
+
+def readNpy(basePath, fname):
+    with open(Path(basePath, fname + '.npy'), 'rb') as f:
         return np.load(f)
 
 def main():
     data_path = Path('.', 'Data', 'Processados', 'LBP')
-    X_train_LBP = readNpy('X_train_LBP')
-    Y_train_LBP = readNpy('Y_train_LBP')
-    X_test_LBP = readNpy('X_test_LBP')
-    Y_test_LBP = readNpy('Y_test_LBP')
-    
+
+    for method in ['default', 'ror', 'uniform', 'nri_uniform', 'var']:
+        X_train_LBP = readNpy(data_path, 'X_train_LBP' + '_' + str(method))
+        Y_train_LBP = readNpy(data_path, 'Y_train_LBP' + '_' + str(method))
+        X_test_LBP = readNpy(data_path, 'X_test_LBP' + '_' + str(method))
+        Y_test_LBP = readNpy(data_path, 'Y_test_LBP' + '_' + str(method))
         
+        clf = svm.SVC()
+        clf.fit(X_train_LBP, Y_train_LBP)
+        yHat = clf.predict(X_test_LBP)
+        acc = (yHat == Y_test_LBP).sum()/len(yHat)
+        print('%s : %.2f' % (method, acc))
 
 if __name__ == '__main__':
     main()
