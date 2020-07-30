@@ -19,7 +19,7 @@ def concatenaLBP(path1, path2, numPoints, radius, method):
     _, hist2 = aplica_lbp(path2, numPoints, radius, method)
     return np.concatenate((hist1, hist2))
 
-def geraLBPMethod(df_train, df_test, output_path, numPoints=24, radius=8, method='uniform'):
+def geraLBPMethod(df_train, df_test, output_path, numPoints, radius, method='uniform'):
     X_train_LBP = df_train.apply(lambda x: concatenaLBP(x['path_pair_id_1'], x['path_pair_id_2'],
                                                         numPoints, radius, method), axis=1).values
     Y_train_LBP = df_train['target'].values
@@ -31,10 +31,10 @@ def geraLBPMethod(df_train, df_test, output_path, numPoints=24, radius=8, method
     X_train_LBP = np.stack(X_train_LBP)
     X_test_LBP = np.stack(X_test_LBP)
     
-    np.save(Path(output_path, 'X_train_LBP' + '_' + str(method)), X_train_LBP)
-    np.save(Path(output_path, 'Y_train_LBP'  + '_' + str(method)), Y_train_LBP)
-    np.save(Path(output_path, 'X_test_LBP' + '_' + str(method)), X_test_LBP)
-    np.save(Path(output_path, 'Y_test_LBP' + '_' + str(method)), Y_test_LBP)
+    np.save(Path(output_path, 'X_train_LBP_' + str(radius) + '_' + str(method)), X_train_LBP)
+    np.save(Path(output_path, 'Y_train_LBP_' + str(radius) + '_' + str(method)), Y_train_LBP)
+    np.save(Path(output_path, 'X_test_LBP_' + str(radius) + '_' + str(method)), X_test_LBP)
+    np.save(Path(output_path, 'Y_test_LBP_' + str(radius) + '_' + str(method)), Y_test_LBP)
 
 def main():
     data_folder = Path('.', 'Data', 'Processados')
@@ -44,11 +44,14 @@ def main():
     output_path = Path(data_folder, 'LBP')
     output_path.mkdir(parents=True, exist_ok=True)
     
-    numPoints=24
-    radius=8
-    for method in ['default', 'ror', 'uniform', 'nri_uniform', 'var']:
-        print(method)
-        geraLBPMethod(df_train, df_test, output_path, numPoints, radius, method)
+    # radius=3
+    # numPoints= 8 * radius
+
+    for radius_ in range(10):
+        numPoints= 8 * radius_
+        for method in ['default', 'ror', 'uniform', 'nri_uniform', 'var']:
+            print('%s radius: %d' % (method, radius_))
+            geraLBPMethod(df_train, df_test, output_path, numPoints, radius_, method)
 
 if __name__ == '__main__':
     main()
