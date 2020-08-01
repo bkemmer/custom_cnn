@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from pathlib import Path
 
 def crop_image(original_image, column, row, width, height):
     # the goal is crop the biggest area
@@ -72,3 +73,13 @@ def detectaFaces(image, scaleFactor = 1.1, minNeighbors = 5, minSize = (30, 30),
 #     df_test['VJ_pair_id_2'] = df_test.apply(lambda x: preprocessing(path_image=x['path_pair_id_2'], 
 #                                                             path_to_save=x['path_pair_id_2_cropped']), axis=1)
 #     return df_train, df_test
+
+def read_datasets_X(path):
+    X_train_1 = np.load(Path(path, 'X_train_1.npy'))
+    X_train_2 = np.load(Path(path, 'X_train_2.npy'))
+    X_test_1 = np.load(Path(path, 'X_test_1.npy'))
+    X_test_2 = np.load(Path(path, 'X_test_2.npy'))
+    
+    return X_train_1, X_train_2, X_test_1, X_test_2
+
+    
