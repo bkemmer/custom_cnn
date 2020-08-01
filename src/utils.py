@@ -52,7 +52,7 @@ def detectaFaces(image, scaleFactor = 1.1, minNeighbors = 5, minSize = (30, 30),
     # utiliza algoritmo proposto por Viola and Jones.
     # return: cropped_image, (column, row, width, height)
     if cascade_path is None:
-        cascade_path = os.path.join('.', 'haarcascades', 'haarcascade_frontalface_alt.xml')
+        cascade_path = os.path.join('..', 'haarcascades', 'haarcascade_frontalface_alt.xml')
     face_cascade = cv2.CascadeClassifier(cascade_path)
 
     rects = face_cascade.detectMultiScale(image,
