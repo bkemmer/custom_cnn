@@ -82,4 +82,36 @@ def read_datasets_X(path):
     
     return X_train_1, X_train_2, X_test_1, X_test_2
 
-    
+
+def padronizar_zscore(X_train, X_val=None, X_test=None):
+    if (type(X_train) == 'pandas.core.frame.DataFrame'):
+
+        for col in X_train.columns:
+            mean = X_train[col].mean()  # media da coluna nos dados de treino
+            std = X_train[col].std(ddof=0)  # std da coluna nos dados de treino
+            X_train[col] = X_train[col].apply(lambda x: (x - mean) / std)
+
+            if not X_val is None:
+                X_val[col] = X_val[col].apply(
+                    lambda x: (x - mean) / std)  # transforma X_val considerando media e desvio do treino
+            if not X_test is None:
+                X_test[col] = X_test[col].apply(
+                    lambda x: (x - mean) / std)  # transforma X_test considerando media e desvio do treino
+
+        return X_train, X_val, X_test, mean, std
+
+    else:
+        for index, column in enumerate(X_train.T):
+            mean = column.mean()
+            std = column.std(ddof=0)
+            zscore = lambda t: (t - mean) / std
+            X_train[:, index] = np.array([zscore(xi) for xi in column])
+            if not X_val is None:
+                column_X_val = X_val[:, index]
+                X_val[:, index] = np.array([zscore(xi) for xi in column_X_val])
+            if not X_test is None:
+                column_X_test = X_test[:, index]
+                X_test[:, index] = np.array(
+                    [zscore(xi) for xi in column_X_test])  # transforma X_test considerando media e desvio do treino
+
+        return X_train, X_val, X_test, mean, std
