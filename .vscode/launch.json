@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-s 100x100"]
+            // "args": ["-s 100x100", "-lbph"]
+            "args": ["-m VJ_resize_LBP"]
         }
     ]
 }

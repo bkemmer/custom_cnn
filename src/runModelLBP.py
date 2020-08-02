@@ -9,6 +9,10 @@ def readNpy(basePath, fname):
         return np.load(f)
 
 def main():
+    args = sys.argv
+    n_rows = int(args[1])
+    n_cols = int(args[2])
+    
     data_path = Path('.', 'Data', 'Processados', 'LBP')
 
     for radius_ in range(5):
