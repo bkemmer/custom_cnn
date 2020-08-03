@@ -72,8 +72,11 @@ def main():
             X_test_HOG = np.append(X_test_1_HOG, X_test_2_HOG, axis=1)
 
             # Step 5: Normalize
+            # Step 5: Normalize
+            X_train_HOG = X_train_HOG.astype('float64') - np.mean(X_train_HOG, axis=0)
+            X_test_HOG = X_test_HOG.astype('float64') - np.mean(X_train_HOG, axis=0)
             X_train_HOG /= np.std(X_train_HOG, axis=0)
-            X_test_HOG /= np.std(X_test_HOG, axis=0)
+            X_test_HOG /= np.std(X_train_HOG, axis=0)
 
             # save files
             size = folder.name

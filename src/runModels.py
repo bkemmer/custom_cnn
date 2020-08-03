@@ -62,51 +62,64 @@ def runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_gr
                                     'Hyperparametros': str(params)
                                     }, index=[0])
             df = pd.concat([df, df_run])
-    df.to_pickle(grid_output)
+        df.to_pickle(grid_output)
     return df
 
 def main(args):
     
-    metodologia = args.metodologia.strip()
+    if args.metodologia is not None:
+        metodologias = [args.metodologia.strip()]
+    else:
+        metodologias = ['VJ_resize_Concat_Flatten_ICA', 'VJ_resize_Concat_HOG_PCA', 
+                        'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
+                        'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
 
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-    logging.info('Rodando modelos da metodologia: %s' % metodologia)
+    for metodologia in metodologias:
+        log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        logging.basicConfig(level=logging.INFO, format=log_fmt)
+        logging.info('Rodando modelos da metodologia: %s' % metodologia)
 
-    input_folder = Path('.', 'Data', 'features', metodologia)
-    path_Y = Path('.', 'Data', 'Processados')
-    
-    d = datetime.now().strftime('%Y-%m-%d_%H-%M')
-    path_resultados = Path('.', 'Data', 'Processados', 'Resultados')
-    path_resultados.mkdir(parents=True, exist_ok=True)
+        input_folder = Path('.', 'Data', 'features', metodologia)
+        path_Y = Path('.', 'Data', 'Processados')
+        
+        d = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        path_resultados = Path('.', 'Data', 'Processados', 'Resultados')
+        path_resultados.mkdir(parents=True, exist_ok=True)
 
-    grid_output = Path(path_resultados, metodologia + '_' + d + '.pickle')
-    df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros'])
-    
-    # # SVC
-    # param_grid = [{'C': [1, 5, 10, 100], 'degree': [1,2,3,4], 'kernel': ['poly', 'rbf']}]
-    # # param_grid = [{'C': [1], 'degree': [1], 'kernel': ['poly','rbf']}]
-    # Classificador_nome = 'SVM'
-    # classifier = SVC()
-    # df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
-    
-    # MLP
-    param_grid = {'solver': ['sgd'], 'max_iter': [1000, 2000, 5000], 
-                    'learning_rate':['constant'], 'learning_rate_init':[0.1, 1, 10, 100],
-                    'alpha': 10.0 ** -np.arange(2, 5), 'hidden_layer_sizes':[10, 100, 1000, 10000], 
-                    'activation':['logistic','relu']}
-    # param_grid = {'solver': ['adam'], 'max_iter': [1000], 'learning_rate':['constant'], learning_rate_init
-    #           'alpha': 10.0 ** -np.arange(2, 3), 'hidden_layer_sizes':[100], 'activation':['relu']}
-    Classificador_nome = 'MLP'
-    classifier = MLPClassifier()
-    df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
+        grid_output = Path(path_resultados, metodologia + '_' + d + '.pickle')
+        df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros'])
+        
+        # SVC
+        param_grid = [{'C': [0.1, 1, 5, 10, 100], 'degree': [1,2,3,4], 'kernel': ['poly', 'rbf']}]
+        # param_grid = [{'C': [1], 'degree': [1], 'kernel': ['poly','rbf']}]
+        Classificador_nome = 'SVM'
+        classifier = SVC()
+        df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
+        
+        param_grid = {  'solver': ['sgd'], 
+                        'max_iter': [1000, 2000, 5000], 
+                        'learning_rate':['constant'], 
+                        'learning_rate_init':[0.1, 1, 10],
+                        'hidden_layer_sizes':[10, 100, 1000], 
+                        'activation':['logistic','relu']}
+
+        # param_grid = {  'solver': ['sgd'], 
+        #                 'max_iter': [1000, ], 
+        #                 'learning_rate':['constant'], 
+        #                 'learning_rate_init':[1],
+        #                 'hidden_layer_sizes':[10], 
+        #                 'activation':['logistic','relu']}
+
+        Classificador_nome = 'MLP'
+        classifier = MLPClassifier()
+        df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
 
     a=1
 if __name__ == '__main__':
 
     ap = argparse.ArgumentParser(description=__doc__)
     
-    ap.add_argument("-m", "--metodologia", required=True,  
+    ap.add_argument("-m", "--metodologia", required=False,  
                         help="Metodologia a ser executada")
     
     args = ap.parse_args()

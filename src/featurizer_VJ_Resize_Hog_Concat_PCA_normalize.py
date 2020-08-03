@@ -94,8 +94,10 @@ for dir_ in root_dirs:
         print(X_test_PCA.shape)
 
         # Step 6: Normalize
+        X_train_PCA = X_train_PCA.astype('float64') - np.mean(X_train_PCA, axis=0)
+        X_test_PCA = X_test_PCA.astype('float64') - np.mean(X_train_PCA, axis=0)
         X_train_PCA /= np.std(X_train_PCA, axis=0)
-        X_test_PCA /= np.std(X_test_PCA, axis=0)
+        X_test_PCA /= np.std(X_train_PCA, axis=0)
         
         # save files
         image_size = os.path.split(dir_)[-1]
