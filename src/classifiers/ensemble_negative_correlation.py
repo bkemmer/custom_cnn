@@ -157,7 +157,7 @@ class ensemble:
         y_train_pred = self.predict(X=X)
         #print(accuracy_score(y_pred=y_train_pred, y_true=y_d))
 
-        return self.b, self.bias_b, self.a, self.bias_a, epoch_abs_error_list, epoch_acc
+        # return self.b, self.bias_b, self.a, self.bias_a, epoch_abs_error_list, epoch_acc
 
 
 

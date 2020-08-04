@@ -96,12 +96,11 @@ def geraLBPMethod(X_train_1, X_train_2, X_test_1, X_test_2, n_points, radius, lb
     X_train = np.concatenate((X_train_1, X_train_2), axis=1)
     X_test = np.concatenate((X_test_1, X_test_2), axis=1)
 
-    X_train = X_train.astype('float64') - np.mean(X_train, axis=0)
-    X_test = X_test.astype('float64') - np.mean(X_train, axis=0)
-
     if normalize:
+        X_train = X_train.astype('float64') - np.mean(X_train, axis=0)
+        X_test = X_test.astype('float64') - np.mean(X_train, axis=0)
         X_train /= np.std(X_train, axis=0)
-        X_test /= np.std(X_train, axis=0)    
+        X_test /= np.std(X_train, axis=0)
     
     return X_train, X_test
 
@@ -116,10 +115,17 @@ def main(args):
             logging.error('Não foi possível ler o tamanho no formato: %s' % args.size)
             sys.exit()
 
-    metodologia = 'VJ_resize_LBP'
+    normalize = args.normalize
     lbph = args.lbph
     if lbph:
         metodologia = 'VJ_resize_LBPH'
+        if normalize:
+            metodologia = 'VJ_resize_LBPH_normalized'
+    else:
+        metodologia = 'VJ_resize_LBP'
+        if normalize:
+            metodologia = 'VJ_resize_LBP_normalized'
+    
 
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -132,9 +138,12 @@ def main(args):
     data_folder = [f for f in data_folder.iterdir() if f.is_dir()]
 
     for folder in data_folder:
+        if folder.name == 'Resultados':
+            # Pasta resultados, onde os mesmos são salvos
+            continue
         size = folder.name
         size_folder = Path(output_folder, size)
-
+        logging.info('Reading X_train_1, X_train_2, X_test_1, X_test_2 from folder: %s' % folder)
         X_train_1, X_train_2, X_test_1, X_test_2 = read_datasets_X(folder)
         # shape (numero_exemplos, largura, altura)
         method = 'uniform'
@@ -144,13 +153,13 @@ def main(args):
                     for grid_X,grid_Y in [(8,8), (16,16)]:
                         logging.info('%s: %s radius: %d numPoint: %d grid:%dx%d' % (metodologia, method, radius, numPoints, grid_X, grid_Y))
                         X_train_LBP, X_test_LBP = geraLBPMethod(X_train_1, X_train_2, X_test_1, X_test_2, 
-                                                                numPoints, radius, lbph, grid_X, grid_Y, method, normalize=True)
+                                                                numPoints, radius, lbph, grid_X, grid_Y, method, normalize=normalize)
                         experiment_folder = Path(size_folder, '_'.join(['r', str(radius), 'n', str(numPoints), 
                                                                         'grid', str(grid_X), str(grid_Y)]))
                 else:
                     logging.info('%s: %s radius: %d numPoint: %d' % (metodologia, method, radius, numPoints))
                     X_train_LBP, X_test_LBP = geraLBPMethod(X_train_1, X_train_2, X_test_1, X_test_2, 
-                                                            numPoints, radius, method=method, normalize=True)
+                                                            numPoints, radius, method=method, normalize=normalize)
                     experiment_folder = Path(size_folder, '_'.join(['r', str(radius), 'n', str(numPoints)]))
                 experiment_folder.mkdir(parents=True, exist_ok=True)
 
@@ -166,6 +175,9 @@ if __name__ == '__main__':
     
     ap.add_argument("-lbph", "--lbph", action="store_true", default=False, 
                         help="Flag para gerar o pré-processamento LBPH")
+    
+    ap.add_argument("-n", "--normalize", action="store_true", default=False, 
+                        help="Flag para normalizar usando z-score")
 
     args = ap.parse_args()
     

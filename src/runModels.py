@@ -41,7 +41,8 @@ def runModels(path_X, path_Y, classifier, param_grid, n_jobs=-1):
         X_train = np.load(Path(folder, 'X_train.npy'))
         # X_test = np.load(Path(folder, 'X_test.npy'))
 
-        grid_search = GridSearchCV(classifier, param_grid, cv=3, scoring="accuracy", n_jobs=n_jobs, param_grid=param_grid, verbose=10)
+        grid_search = GridSearchCV(classifier, param_grid, cv=3, scoring="accuracy", n_jobs=n_jobs, 
+                                    param_grid=param_grid, verbose=10)
         grid_search.fit(X_train, y_train)
     
         grid_searchs[str(folder)] = grid_search.cv_results_
@@ -66,32 +67,46 @@ def runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_gr
     return df
 
 def main(args):
+
+    # Configurações do grid
+    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+    #path com as features
+    features_folder = Path('.', 'Data', 'features')
+    # path onde está as variáveis dependentes Y
+    path_Y = Path('.', 'Data', 'Processados')
+    # path onde serão salvos os resultados .pickle
+    path_resultados = Path('.', 'Data', 'Processados', 'Resultados')
+    path_resultados.mkdir(parents=True, exist_ok=True)
     
+    # leitura dos argumentos de entrada
+    test = args.test
     if args.metodologia is not None:
         metodologias = [args.metodologia.strip()]
+    elif args.all:
+        metodologias = [f.name for f in features_folder.iterdir() if f.is_dir()]
+    # caso seja feita uma execução de somente algumas features
     else:
         metodologias = ['VJ_resize_Concat_Flatten_ICA', 'VJ_resize_Concat_HOG_PCA', 
                         'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
                         'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
 
-    for metodologia in metodologias:
-        log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        logging.basicConfig(level=logging.INFO, format=log_fmt)
-        logging.info('Rodando modelos da metodologia: %s' % metodologia)
 
+    for metodologia in metodologias:
+
+        logging.info('Rodando modelos da metodologia: %s' % metodologia)
         input_folder = Path('.', 'Data', 'features', metodologia)
-        path_Y = Path('.', 'Data', 'Processados')
         
         d = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        path_resultados = Path('.', 'Data', 'Processados', 'Resultados')
-        path_resultados.mkdir(parents=True, exist_ok=True)
 
         grid_output = Path(path_resultados, metodologia + '_' + d + '.pickle')
         df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros'])
         
         # SVC
+
         param_grid = [{'C': [0.1, 1, 5, 10, 100], 'degree': [1,2,3,4], 'kernel': ['poly', 'rbf']}]
-        # param_grid = [{'C': [1], 'degree': [1], 'kernel': ['poly','rbf']}]
+        if test:
+            param_grid = [{'C': [1], 'degree': [1], 'kernel': ['poly','rbf']}]
         Classificador_nome = 'SVM'
         classifier = SVC()
         df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
@@ -102,13 +117,13 @@ def main(args):
                         'learning_rate_init':[0.1, 1, 10],
                         'hidden_layer_sizes':[10, 100, 1000], 
                         'activation':['logistic','relu']}
-
-        # param_grid = {  'solver': ['sgd'], 
-        #                 'max_iter': [1000, ], 
-        #                 'learning_rate':['constant'], 
-        #                 'learning_rate_init':[1],
-        #                 'hidden_layer_sizes':[10], 
-        #                 'activation':['logistic','relu']}
+        if test:
+            param_grid = {  'solver': ['sgd'], 
+                            'max_iter': [1000, ], 
+                            'learning_rate':['constant'], 
+                            'learning_rate_init':[1],
+                            'hidden_layer_sizes':[10], 
+                            'activation':['logistic','relu']}
 
         Classificador_nome = 'MLP'
         classifier = MLPClassifier()
@@ -121,7 +136,10 @@ if __name__ == '__main__':
     
     ap.add_argument("-m", "--metodologia", required=False,  
                         help="Metodologia a ser executada")
-    
+    ap.add_argument("-all", "--all", action="store_true", default=False, 
+                        help="Flag para rodar todos os modelos que estão na pasta de features")
+    ap.add_argument("-test", "--test", action="store_true", default=False, 
+                        help="Flag para rodar apenas um modelo de teste")
     args = ap.parse_args()
 
     main(args)
