@@ -13,6 +13,7 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
+import time
 
 import numpy as np
 import pandas as pd
@@ -51,6 +52,7 @@ def runModels(path_X, path_Y, classifier, param_grid, n_jobs=-1):
     return grid_searchs, grid_search_best_estimators
 
 def runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df):
+    start_time = time.time()
     grid_searchs, grid_search_best_estimators = runModels(input_folder, path_Y, classifier, param_grid)
     
     for k,grid_search in grid_searchs.items():
@@ -60,7 +62,8 @@ def runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_gr
             df_run = pd.DataFrame({'Preprocessamento': k,
                                     'Acuracia': acc,
                                     'Classificador': Classificador_nome,
-                                    'Hyperparametros': str(params)
+                                    'Hyperparametros': str(params),
+                                    'Execution time': '%.1f' % (time.time() - start_time)
                                     }, index=[0])
             df = pd.concat([df, df_run])
         df.to_pickle(grid_output)
@@ -91,16 +94,16 @@ def main(args):
                         'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
                         'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
 
-
+    start_time_total = time.time()
     for metodologia in metodologias:
-
+        start_time_metodologia = time.time()
         logging.info('Rodando modelos da metodologia: %s' % metodologia)
         input_folder = Path('.', 'Data', 'features', metodologia)
         
         d = datetime.now().strftime('%Y-%m-%d_%H-%M')
 
         grid_output = Path(path_resultados, metodologia + '_' + d + '.pickle')
-        df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros'])
+        df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros', 'Execution time'])
         
         # SVC
 
@@ -129,7 +132,11 @@ def main(args):
         classifier = MLPClassifier()
         df = runGridSearch(input_folder, path_Y, Classificador_nome, classifier, param_grid, grid_output, df)
 
-    a=1
+        logging.info('Execução da metodologia %s: %.1f segundos.' % (metodologia, 
+                                                                      time.time() - start_time_metodologia))
+
+    logging.info('Execução total: %.1f segundos.' % (time.time() - start_time_total))
+
 if __name__ == '__main__':
 
     ap = argparse.ArgumentParser(description=__doc__)
