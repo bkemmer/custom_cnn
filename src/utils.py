@@ -156,15 +156,42 @@ def CrossValidacaoEstratificada(X, y, folds=4, seed=42):
             X_fold_ids[fold_atual].append(index)
             fold_atual += 1
     
-    print('\nValidação Cruzada:\n\nDados de teste originais:')
+    # print('\nValidação Cruzada:\n\nDados de teste originais:')
     for i,y_i in enumerate(unicos):
         y_prop = np.sum(y==y_i) / len(y)
-        print('Proporção nos testes da classe {}: {:.2f} em {:d}'.format(y_i, y_prop, len(y)))
+        # print('Proporção nos testes da classe {}: {:.2f} em {:d}'.format(y_i, y_prop, len(y)))
 
-    print('\nApós a separação em {} folds:'.format(folds))
+    # print('\nApós a separação em {} folds:'.format(folds))
     for k, fold_id in enumerate(X_fold_ids):
         for i,y_i in enumerate(unicos):
             y_prop = np.sum(y[fold_id]==y_i) / len(y[fold_id])
-            print('Fold {:d} - Proporção nos testes da classe {}: {:.2f} em {:d} exemplos'.format(k, y_i, y_prop, len(fold_id)))
-        print()
+            # print('Fold {:d} - Proporção nos testes da classe {}: {:.2f} em {:d} exemplos'.format(k, y_i, y_prop, len(fold_id)))
+        # print()
     return X_fold_ids
+
+def Ymulticlasse(y_train, y_test=None, classes=None):
+    """ Função recebe dois vetores binários e transforma eles em one-hot-encoding
+
+    Arguments:
+        y_train {np.array} -- vetor de classes de treino
+        y_test {np.array} -- vetor de classes de treino
+
+    Returns:
+        (np.array, np.array) -- vetor de classes de treino e teste
+    """
+    if classes is None:
+        if y_test is None:
+            classes = sorted(set(y_train))
+        else:
+            classes = sorted(set(y_train).union(set(y_test)))
+    y_train_multi = np.zeros((len(y_train), len(classes)))
+    if y_test:
+        y_test_multi = np.zeros((len(y_test), len(classes)))
+    for i, classe in enumerate(classes):
+        y_train_multi[:, i] = np.where(y_train == classe, 1, 0)
+        if y_test:
+            y_test_multi[:, i] = np.where(y_test == classe, 1, 0)
+    if y_test:
+        return y_train_multi, y_test_multi
+    else:
+        return y_train_multi

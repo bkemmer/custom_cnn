@@ -4,7 +4,7 @@
 
 Usage:
 
-    python3 runModels.py 
+    python3 runModels_neg_corr.py
 
 Returns:
     
@@ -18,15 +18,10 @@ import time
 import numpy as np
 import pandas as pd
 
+from classifiers.RedeNeuralNegEnsemble import redeNeuralSoftmaxEnsemble, preditorNeuralSoftmaxEnsemble
 
-from classifiers.ensemble_negative_correlation import ensemble
+from utils import CrossValidacaoEstratificada, Ymulticlasse
 
-from utils import CrossValidacaoEstratificada
-
-from itertools import product
-
-def my_product(dicionario):
-    return (dict(zip(dicionario.keys(), values)) for values in product(*dicionario.values()))
 
 def getFilesFolders(path_X):
     p = Path(path_X)
@@ -41,7 +36,7 @@ def main(args):
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     #path com as features
-    features_folder = Path('.', 'Data', 'features')
+    features_folder = Path('.', 'Data', 'features_light')
     # path onde está as variáveis dependentes Y
     path_Y = Path('.', 'Data', 'Processados')
     # path onde serão salvos os resultados .pickle
@@ -60,14 +55,15 @@ def main(args):
                         'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
                         'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
 
-
+    start_time_total = time.time()
     for metodologia in metodologias:
 
+        start_time_metodologia = time.time()
         logging.info('Rodando modelos da metodologia: %s' % metodologia)
-        input_folder = Path('.', 'Data', 'features', metodologia)
+        input_folder = Path('.', 'Data', 'features_light', metodologia)
         
         d = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        classificador_nome = 'negative_correlation' 
+        classificador_nome = 'negative_correlation'
         grid_output = Path(path_resultados, '_'.join([classificador_nome, metodologia, d]) + '.pickle')
         df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros', 'Execution time'])
 
@@ -78,7 +74,8 @@ def main(args):
                         'num_hidden': [10, 100, 1000],
                         'number_classifiers': [2, 3, 5],
                         'cv': 3,
-                        'k_folds_seed': 42
+                        'k_folds_seed': 42,
+                        'inicializa_rede_seed': 42
                     }
         if test:
             param_grid = {
@@ -88,14 +85,16 @@ def main(args):
                             'num_hidden':[100],
                             'number_classifiers': [3],
                             'cv': 3,
-                            'k_folds_seed': 42
+                            'k_folds_seed': 42,
+                            'inicializa_rede_seed': 42
                         }
 
         k_folds = param_grid['cv']
         k_folds_seed = param_grid['k_folds_seed']
+        inicializa_rede_seed = param_grid['inicializa_rede_seed']
 
         y_train = np.load(Path(path_Y, 'y_train.npy'))
-
+        y_train = Ymulticlasse(y_train)
         
         for folder in getFilesFolders(input_folder):
             logging.info('Lendo input da pasta: %s' % folder)
@@ -108,7 +107,6 @@ def main(args):
                             for lamdba in param_grid['lamdba']:
                                 
                                 start_time = time.time()
-                                classifier = ensemble(num_hidden = num_hidden, number_classifiers = number_classifiers)
 
                                 # executa a cross validação estratificada
                                 X_train_folds = CrossValidacaoEstratificada(X_train, y_train, k_folds, k_folds_seed)
@@ -124,9 +122,15 @@ def main(args):
                                     X_test_fold = X_train[others_ids]
                                     y_test_fold = y_train[others_ids]
 
-                                    classifier.fit(X=X_train_fold, y_d=y_train_fold, lamdba=lamdba, alfa=alfa, n_max=n_max)
-                                    yHat = classifier.predict(X_test_fold)
-                                    resultados_fold[k_fold] = np.sum(yHat == y_test_fold)
+                                    parametros, custo = redeNeuralSoftmaxEnsemble(X_train_fold, y_train_fold, n_redes=number_classifiers, lamdba=lamdba, 
+                                                                                    h_size=num_hidden, ativacao='sigmoid', taxa_aprendizado=alfa,
+                                                                                    max_iteracoes=n_max, custo_min=1e-7, 
+                                                                                    seed=inicializa_rede_seed,
+                                                                                    plot=False)
+                                    yHat = preditorNeuralSoftmaxEnsemble(X_test_fold, parametros, ativacao='sigmoid')
+                                    yHat = Ymulticlasse(yHat)
+
+                                    resultados_fold[k_fold] = np.all(yHat==y_test_fold, axis=1).sum()/len(yHat)
 
                                 acc = resultados_fold.mean()
                                 
@@ -146,6 +150,10 @@ def main(args):
                                 df = pd.concat([df, df_run])
                                 df.to_pickle(grid_output)
 
+        logging.info('Execução da metodologia %s: %.1f segundos.' % (metodologia, 
+                                                                      time.time() - start_time_metodologia))
+
+    logging.info('Execução total: %.1f segundos.' % (time.time() - start_time_total))
 if __name__ == '__main__':
 
     ap = argparse.ArgumentParser(description=__doc__)

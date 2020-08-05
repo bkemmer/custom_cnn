@@ -64,7 +64,7 @@ class ensemble:
     # Train neural network
     def fit(self, X, y_d, lamdba = 1, alfa=0.1, n_max=10000):
         n, m = X.shape
-            n_c = y_d.shape[1]
+        n_c = y_d.shape[1]
         number_classifiers = self.number_classifiers
 
         #shuffle

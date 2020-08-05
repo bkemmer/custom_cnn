@@ -26,7 +26,8 @@ class svm:
         K = self.svm_kernel_fit(X, kernel_type, degree)
         P = cvxopt.matrix(np.multiply(np.matmul(y, y.T), K).astype('float'))
         q = cvxopt.matrix(np.ones(n_samples) * -1)
-        A = cvxopt.matrix(y.T.astype('float'))
+        # A = cvxopt.matrix(y.T.astype('float'))
+        A = cvxopt.matrix(y.reshape((1,n_samples)), tc='d')
         b = cvxopt.matrix(0.0)
         
         if C is None or C==0:      # hard-margin SVM
