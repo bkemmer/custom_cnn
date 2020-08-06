@@ -26,7 +26,6 @@ def correlacao_negativa(yHats, i, lamdba):
     p_i = (yHats[i] - f_n)*np.sum(yHats[j!=i]-f_n, axis=0)
     return lamdba*np.mean(p_i)
 
-# TODO: travar seed
 def inicializaRede(n, d, h_size, n_classes, seed):  # sourcery skip: merge-dict-assign
     np.random.seed(seed)
     parametros = {}

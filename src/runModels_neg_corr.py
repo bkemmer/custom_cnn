@@ -36,7 +36,7 @@ def main(args):
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     #path com as features
-    features_folder = Path('.', 'Data', 'features_light')
+    features_folder = Path('.', 'Data', 'features_light_MLP')
     # path onde está as variáveis dependentes Y
     path_Y = Path('.', 'Data', 'Processados')
     # path onde serão salvos os resultados .pickle
@@ -54,26 +54,35 @@ def main(args):
         metodologias = ['VJ_resize_Concat_Flatten_ICA', 'VJ_resize_Concat_HOG_PCA', 
                         'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
                         'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
+    
+    # Manualmente não rodar alguma metodologia
+    skipped = ['VJ_resize_LBPH_normalized', 'VJ_resize_HOG_Concat_Normalize']
+    metodologias = [m for m in metodologias if m not in skipped]
 
+    classificador_nome = 'negative_correlation'
+    d = datetime.now().strftime('%Y-%m-%d_%H-%M')
+    grid_output_folder = Path(path_resultados, '_'.join([classificador_nome, d]))
+    grid_output_folder.mkdir(parents=True, exist_ok=True)
+        
     start_time_total = time.time()
     for metodologia in metodologias:
 
         start_time_metodologia = time.time()
         logging.info('Rodando modelos da metodologia: %s' % metodologia)
-        input_folder = Path('.', 'Data', 'features_light', metodologia)
+        input_folder = Path(features_folder, metodologia)
         
         d = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        classificador_nome = 'negative_correlation'
-        grid_output = Path(path_resultados, '_'.join([classificador_nome, metodologia, d]) + '.pickle')
+
+        grid_output = Path(grid_output_folder, '_'.join([metodologia, d]) + '.pickle')
         df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros', 'Execution time'])
 
         param_grid = {
-                        'n_max': [1000, 5000, 10000], 
-                        'alfa': [0.1, 1, 5, 10],
-                        'lamdba': [0, 0.25, 0.5, 0.75, 1],
-                        'num_hidden': [10, 100, 1000],
-                        'number_classifiers': [2, 3, 5],
-                        'cv': 3,
+                        'n_max': [500, 1000],#, 10000], 
+                        'alfa': [0.1, 0.5, 1],
+                        'lamdba': [0.5, 1],
+                        'num_hidden': [10, 100],#, 1000],
+                        'number_classifiers': [2, 3],
+                        'cv': 5,
                         'k_folds_seed': 42,
                         'inicializa_rede_seed': 42
                     }

@@ -103,17 +103,21 @@ def main(args):
         metodologias = ['VJ_resize_Concat_Flatten_ICA', 'VJ_resize_Concat_HOG_PCA', 
                         'VJ_resize_HOG_Concat_Normalize', 'VJ_resize_HOG_Concat_PCA',
                         'VJ_resize_HOG_Concat_PCA_normalize', 'VJ_resize_LBP', 'VJ_resize_LBPH']
+    
+    classificador_nome = 'SVM'
+    d = datetime.now().strftime('%Y-%m-%d_%H-%M')
+    grid_output_folder = Path(path_resultados, '_'.join([classificador_nome, d]))
+    grid_output_folder.mkdir(parents=True, exist_ok=True)
 
     start_time_total = time.time()
     for metodologia in metodologias:
 
         start_time_metodologia = time.time()
         logging.info('Rodando modelos da metodologia: %s' % metodologia)
-        input_folder = Path('.', 'Data', 'features_light', metodologia)
+        input_folder = Path('.', 'Data', 'features', metodologia)
         
         d = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        classificador_nome = 'SVM' 
-        grid_output = Path(path_resultados, '_'.join([classificador_nome, metodologia, d]) + '.pickle')
+        grid_output = Path(grid_output_folder, '_'.join([metodologia, d]) + '.pickle')
         df = pd.DataFrame(columns=['Preprocessamento', 'Acuracia', 'Classificador', 'Hyperparametros', 'Execution time'])
 
 
